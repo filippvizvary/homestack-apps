@@ -2,60 +2,115 @@
 
 Lightweight Bitwarden-compatible password manager server.
 
-**Website:** <https://github.com/dani-garcia/vaultwarden>
+- **Official Documentation:** <https://github.com/dani-garcia/vaultwarden/wiki>
+- **GitHub:** <https://github.com/dani-garcia/vaultwarden>
+- **Port:** `8000` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:8000` in your browser.
+1. Open `http://<your-server-ip>:8000` in your browser
+2. Create your account (note: signups are disabled by default after the first account)
+3. Download Bitwarden client apps from <https://bitwarden.com/download/>
+4. In the Bitwarden client, set the server URL to `http://<your-server-ip>:8000` before logging in
 
-## First-Time Setup
+## Services
 
-1. **Before installing**, decide on your public domain/URL. During installation, you will be prompted for `VAULTWARDEN_DOMAIN` — enter your public HTTPS URL (e.g., `https://vault.yourdomain.com`).
-2. After the app starts, open the web UI and click **Create Account** to register your first user.
-3. **Important:** New account registration is **disabled by default** (`SIGNUPS_ALLOWED=false` in the compose file). To allow signups:
-   - Temporarily edit `installed/vaultwarden/compose.yaml` and set `SIGNUPS_ALLOWED=true`
-   - Restart: `homestack restart vaultwarden`
-   - Create your account(s)
-   - Set it back to `false` and restart again
-4. Set up a reverse proxy with HTTPS — Vaultwarden and Bitwarden clients require a secure connection for most features.
-
-## Configuration
-
-The `VAULTWARDEN_DOMAIN` secret in `installed/vaultwarden/secrets.env` must be set to your public URL (e.g., `https://vault.yourdomain.com`).
-
-Edit `installed/vaultwarden/config.env` to change the image version:
-- `VAULTWARDEN_SERVER` — Vaultwarden Docker image tag
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `vaultwarden` | `vaultwarden` | Password manager server |
 
 ## Ports
 
-| Host Port | Container Port | Purpose |
-|-----------|----------------|---------|
-| 8000 | 80 | Web UI and API |
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `8000` | TCP | Web vault UI and API (maps to container port 80) |
 
-## Data Storage
+## Volumes
 
-- **Data & database:** `AppData/vaultwarden/data/`
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/vaultwarden` | `/data` | Database, attachments, configuration, RSA keys |
 
-## Backup
+## Environment Variables
 
-Uses `stop` strategy — containers are stopped before backup to protect the SQLite database.
+### In `config.env`
 
-```bash
-homestack backup vaultwarden
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VAULTWARDEN_SERVER` | `vaultwarden/server:1.35.3` | Image tag |
+
+### In `secrets.env` (configured during install)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VAULTWARDEN_DOMAIN` | `https://warden.example.com` | Public URL for your Vaultwarden instance |
+
+### In `compose.yaml`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DOMAIN` | `${VAULTWARDEN_DOMAIN}` | Public domain (from secrets.env) |
+| `SIGNUPS_ALLOWED` | `false` | Whether new signups are allowed |
+
+## Customization
+
+### Enabling Signups
+
+To temporarily allow signups, edit `installed/vaultwarden/compose.yaml`:
+
+```yaml
+environment:
+  - SIGNUPS_ALLOWED=true
 ```
 
-## Client Apps
+Then restart: `homestack restart vaultwarden`. Disable again after creating accounts.
 
-Vaultwarden is compatible with all official Bitwarden clients:
+### Enabling Admin Panel
 
-- **Browser extensions:** [Chrome](https://chrome.google.com/webstore/detail/bitwarden/nngceckbapebfimnlniiiahkandclblb) / [Firefox](https://addons.mozilla.org/firefox/addon/bitwarden-password-manager/) / [Edge](https://microsoftedge.microsoft.com/addons/detail/bitwarden/jbkfoedolllcefarcelnjpcfdgdjdj)
-- **Desktop:** [Bitwarden Desktop](https://bitwarden.com/download/)
-- **Mobile:** [Android](https://play.google.com/store/apps/details?id=com.x8bit.bitwarden) / [iOS](https://apps.apple.com/app/bitwarden-password-manager/id1137397744)
+Add the admin token environment variable:
 
-When setting up clients, use your custom server URL (e.g., `https://vault.yourdomain.com`) instead of the default Bitwarden cloud.
+```yaml
+environment:
+  - DOMAIN=${VAULTWARDEN_DOMAIN}
+  - SIGNUPS_ALLOWED=false
+  - ADMIN_TOKEN=your-secure-admin-token
+```
+
+Access the admin panel at `http://<server-ip>:8000/admin`.
+
+### Setting Up HTTPS
+
+Vaultwarden requires HTTPS for browser extensions and mobile apps. Use a reverse proxy (Caddy/Nginx/Traefik) or set the domain in `secrets.env`:
+
+```env
+VAULTWARDEN_DOMAIN=https://warden.yourdomain.com
+```
+
+### WebSocket Support
+
+For live sync notifications, enable WebSocket in your reverse proxy configuration. Vaultwarden serves WebSocket on the same port.
+
+### Adding Custom Volumes
+
+```yaml
+services:
+  vaultwarden:
+    volumes:
+      - ${APPDATA}/vaultwarden:/data
+      - /path/to/ssl-certs:/ssl:ro  # Custom SSL certificates
+```
+
+## Data & Backup
+
+- **Backup strategy:** `stop` (containers stop for SQLite consistency)
+- **Data location:** `AppData/vaultwarden/`
+- **Database:** SQLite at `AppData/vaultwarden/db.sqlite3`
+- **RSA keys:** Stored in `AppData/vaultwarden/rsa_key*`
 
 ## Tips
 
-- **HTTPS is required** for browser extensions and mobile apps to work properly. Set up a reverse proxy (Nginx, Caddy, Traefik) with a valid SSL certificate.
-- Enable the **admin panel** by setting the `ADMIN_TOKEN` environment variable in the compose file — see [Vaultwarden wiki](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page).
-- Regular backups are critical — this stores all your passwords.
+- Use a reverse proxy with HTTPS — Bitwarden clients require HTTPS for full functionality
+- Set `SIGNUPS_ALLOWED=false` after creating your accounts
+- Back up regularly — the database contains all your passwords
+- Bitwarden browser extensions, desktop apps, and mobile apps all work with Vaultwarden
+- Consider enabling 2FA (TOTP) for your Vaultwarden account

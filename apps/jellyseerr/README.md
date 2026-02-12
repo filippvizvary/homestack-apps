@@ -1,38 +1,79 @@
 # Jellyseerr
 
-Media request management and discovery tool for Jellyfin — lets users request movies and TV shows.
+Media request management and discovery tool for Jellyfin.
 
-**Website:** <https://github.com/Fallenbagel/jellyseerr>
+- **Official Documentation:** <https://docs.jellyseerr.dev>
+- **GitHub:** <https://github.com/Fallenbagel/jellyseerr>
+- **Port:** `5055` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:5055` in your browser.
+1. Open `http://<your-server-ip>:5055` in your browser
+2. Sign in with your Jellyfin account (select "Use your Jellyfin account")
+3. Enter your Jellyfin server URL (e.g., `http://<server-ip>:8096`)
+4. Configure Radarr/Sonarr connections under **Settings → Services**
+5. Scan your existing Jellyfin libraries under **Settings → Jellyfin**
 
-## First-Time Setup
+## Services
 
-1. On first visit, select **Jellyfin** as your media server.
-2. Enter your Jellyfin server URL (e.g., `http://<your-server-ip>:8096`).
-3. Sign in with your Jellyfin admin credentials.
-4. Sync your Jellyfin libraries so Jellyseerr knows what media you already have.
-5. Optionally configure Radarr and Sonarr connections to enable automatic downloading of requested media:
-   - Go to **Settings > Services** to add your Radarr/Sonarr instances.
-   - Use their internal Docker network address if on the same `media-net` network (e.g., `http://radarr:7878`).
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `jellyseerr` | `jellyseerr` | Request management web app |
 
-## Network
+## Ports
 
-Jellyseerr joins the `media-net` Docker network, allowing it to communicate directly with other Servarr stack apps (Radarr, Prowlarr, qBittorrent) by container name.
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `5055` | TCP | Web UI |
 
-## Configuration
+## Volumes
 
-Edit `installed/jellyseerr/config.env` to change the image version:
-- `JELLYSEERR_SERVER` — Jellyseerr Docker image tag
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/jellyseerr/config` | `/app/config` | Configuration and database |
 
-## Data Storage
+## Environment Variables
 
-- **Config data:** `AppData/jellyseerr/config/`
+### In `config.env`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JELLYSEERR_SERVER` | `ghcr.io/fallenbagel/jellyseerr:2.7.3` | Image tag |
+
+### In `compose.yaml`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `info` | Logging level (`debug`, `info`, `warn`, `error`) |
+| `PORT` | `5055` | Internal port |
+| `TZ` | From `homestack.env` | Timezone |
+
+## Networks
+
+- **`media-net`** — External Docker network shared with Jellyfin, Radarr, Prowlarr, and qBittorrent
+
+## Customization
+
+### Adding Additional Volume Mounts
+
+Edit `installed/jellyseerr/compose.yaml`:
+
+```yaml
+services:
+  jellyseerr:
+    volumes:
+      - ${APPDATA}/jellyseerr/config:/app/config
+      - /path/to/custom/data:/custom  # Additional mount
+```
+
+## Data & Backup
+
+- **Backup strategy:** `live` (backup while running)
+- **Data location:** `AppData/jellyseerr/config/`
+- **Database:** SQLite in config directory
 
 ## Tips
 
-- Users can sign in with their Jellyfin accounts to make requests.
-- Set up notification agents (Discord, email, etc.) under **Settings > Notifications**.
-- Request limits can be configured per user under **Settings > Users**.
+- Jellyseerr needs network access to Jellyfin — both are on the `media-net` Docker network
+- Configure Radarr and Sonarr first, then connect them to Jellyseerr for automatic request fulfillment
+- Users can request movies/TV shows and track download progress

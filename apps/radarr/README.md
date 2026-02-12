@@ -1,48 +1,92 @@
 # Radarr
 
-Movie collection manager — automatically searches, downloads, and organizes movies.
+Movie collection manager — automates downloading, renaming, and organizing movies.
 
-**Website:** <https://radarr.video>
+- **Official Documentation:** <https://wiki.servarr.com/radarr>
+- **Website:** <https://radarr.video>
+- **Port:** `7878` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:7878` in your browser.
+1. Open `http://<your-server-ip>:7878` in your browser
+2. Set up authentication under **Settings → General → Authentication**
+3. Add a download client under **Settings → Download Clients** (e.g., qBittorrent at `http://qbittorrent:8080`)
+4. Add indexers under **Settings → Indexers** (or let Prowlarr sync them automatically)
+5. Configure root folders under **Settings → Media Management**
+6. Start adding movies!
 
-## First-Time Setup
+## Services
 
-1. On first visit, Radarr will ask you to set up **authentication**. Create a username and password.
-2. Add a **root folder** for your movie library:
-   - Go to **Settings > Media Management > Root Folders**
-   - Add `/movies` (maps to `Media/Movies/` on the host)
-3. Add a **download client**:
-   - Go to **Settings > Download Clients**
-   - Add **qBittorrent** with host `qbittorrent`, port `8080` (if on the same `media-net` network)
-4. Add **indexers** — if using Prowlarr, they will sync automatically. Otherwise, add them manually under **Settings > Indexers**.
-5. Add movies by searching from the **Add New** page.
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `radarr` | `radarr` | Movie manager (LinuxServer.io image) |
 
-## Network
+## Ports
 
-Radarr joins the `media-net` Docker network, allowing direct communication with Prowlarr, qBittorrent, Jellyfin, and other Servarr stack apps by container name.
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `7878` | TCP | Web UI and API |
 
-## Media Directories
+## Volumes
 
-| Host Path | Container Path | Purpose |
-|-----------|----------------|---------|
-| `Media/Movies/` | `/movies` | Movie library |
-| `Media/Downloads/` | `/downloads` | Completed downloads (shared with qBittorrent) |
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/radarr` | `/config` | Configuration, database, logs |
+| `${MEDIA}/Movies` | `/movies` | Movie library (organized files) |
+| `${MEDIA}/Downloads` | `/downloads` | Download directory (shared with qBittorrent) |
 
-## Configuration
+## Environment Variables
 
-Edit `installed/radarr/config.env` to change the image version:
-- `RADARR_SERVER` — Radarr Docker image tag (LinuxServer image)
+### In `config.env`
 
-## Data Storage
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RADARR_SERVER` | `lscr.io/linuxserver/radarr:6.0.4` | Image tag |
 
-- **Config data:** `AppData/radarr/config/`
+### In `compose.yaml`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUID` | From `homestack.env` | User ID for file ownership |
+| `PGID` | From `homestack.env` | Group ID for file ownership |
+| `TZ` | From `homestack.env` | Timezone |
+
+## Networks
+
+- **`media-net`** — External Docker network shared with qBittorrent, Prowlarr, and Jellyseerr
+
+## Customization
+
+### Adding NAS Paths
+
+Edit `installed/radarr/compose.yaml`:
+
+```yaml
+services:
+  radarr:
+    volumes:
+      - ${APPDATA}/radarr:/config
+      - ${MEDIA}/Movies:/movies
+      - ${MEDIA}/Downloads:/downloads
+      - /mnt/nas/movies:/mnt/nas-movies    # NAS movie library
+      - /mnt/nas/downloads:/mnt/nas-dl     # NAS downloads
+```
+
+Then add the NAS path as a root folder in Radarr's **Settings → Media Management → Root Folders**.
+
+### Hardlink Support
+
+For hardlinks to work (instant moves, no disk space duplication), the download and movie directories must be on the **same filesystem**. The default setup supports this since both `/downloads` and `/movies` are under `${MEDIA}`.
+
+## Data & Backup
+
+- **Backup strategy:** `live` (backup while running — uses SQLite)
+- **Config:** `AppData/radarr/`
+- **Movies:** `Media/Movies/` — not backed up by HomeStack
 
 ## Tips
 
-- Radarr's API key can be found under **Settings > General** — you'll need it to connect Prowlarr and Jellyseerr.
-- Set up **quality profiles** under Settings to control what quality/resolution of movies to download.
-- Enable **Completed Download Handling** to automatically import files from qBittorrent after download.
-- The LinuxServer image uses `PUID`/`PGID` for file permissions, configured via HomeStack's global settings.
+- Use Prowlarr to manage indexers centrally instead of adding them individually
+- Set up **Custom Formats** for quality preferences (e.g., prefer x265, HDR)
+- Enable **Recycling Bin** under **Settings → Media Management** to prevent accidental deletions
+- Radarr communicates with qBittorrent via the `media-net` Docker network

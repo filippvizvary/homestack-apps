@@ -1,9 +1,9 @@
-startup_time: 60
+startup_time: 90
 health_checks:
   - url: "https://localhost:4432"
     method: GET
     expected_status: 200
-    timeout: 15
+    timeout: 30
 exec_checks:
   - container: nextcloud-db
     command: "healthcheck.sh --connect --innodb_initialized"

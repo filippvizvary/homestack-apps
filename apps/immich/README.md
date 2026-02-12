@@ -1,57 +1,108 @@
 # Immich
 
-Self-hosted photo and video management solution — a Google Photos alternative.
+Self-hosted photo and video management solution.
 
-**Website:** <https://immich.app>
+- **Official Documentation:** <https://immich.app/docs>
+- **GitHub:** <https://github.com/immich-app/immich>
+- **Port:** `2283` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:2283` in your browser.
-
-## First-Time Setup
-
-1. On first visit, you will see the **Welcome** screen. Create an admin account by entering your name, email, and password.
-2. After logging in, configure your settings under **Administration > Settings**.
-3. Install the Immich mobile app ([iOS](https://apps.apple.com/app/immich/id1613945686) / [Android](https://play.google.com/store/apps/details?id=app.alextran.immich)) and connect it to your server URL.
-4. Enable **Auto Backup** in the mobile app to start uploading your photos.
+1. Open `http://<your-server-ip>:2283` in your browser
+2. Create your first admin account
+3. Upload photos through the web UI or use the Immich mobile app (iOS/Android)
+4. Configure external libraries under **Administration → Libraries**
 
 ## Services
 
-Immich runs 4 containers:
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `immich-server` | `immich_server` | Main Immich application + API |
+| `immich-machine-learning` | `immich_machine_learning` | AI/ML for face detection, search, tagging |
+| `redis` | `immich_redis` | Cache and job queue |
+| `database` | `immich_postgres` | PostgreSQL with pgvectors for AI search |
 
-| Service | Description |
-|---------|-------------|
-| `immich-server` | Main application server (API + web UI) |
-| `immich-machine-learning` | AI/ML for facial recognition, smart search, and OCR |
-| `redis` | Cache layer (Valkey) |
-| `database` | PostgreSQL with vector extensions for ML embeddings |
+## Ports
 
-## Configuration
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `2283` | TCP | Web UI and API |
 
-Edit `installed/immich/config.env` to change image versions.
+## Volumes
 
-Key secrets (auto-generated in `secrets.env`):
-- `DB_USERNAME` — PostgreSQL username (default: `immich`)
-- `DB_PASSWORD` — PostgreSQL password (auto-generated)
-- `DB_DATABASE_NAME` — Database name (default: `immich`)
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/immich/library` | `/data` | Photo and video library storage |
+| `${APPDATA}/immich/ml` | `/cache` | Machine learning model cache |
+| `${APPDATA}/immich/redis` | `/data` | Redis persistent data |
+| `${APPDATA}/immich/postgres` | `/var/lib/postgresql/data` | PostgreSQL database |
 
-## Data Storage
+## Environment Variables
 
-- **Library data:** `AppData/immich/library/`
-- **ML model cache:** `AppData/immich/ml/`
-- **PostgreSQL data:** `AppData/immich/postgres/`
-- **Redis data:** `AppData/immich/redis/`
+### In `config.env`
 
-## Backup
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `IMMICH_SERVER` | `ghcr.io/immich-app/immich-server:v2.4.1` | Server image tag |
+| `IMMICH_ML` | `ghcr.io/immich-app/immich-machine-learning:v2.4.1` | ML image tag |
+| `IMMICH_REDIS` | `docker.io/valkey/valkey:9@sha256:...` | Redis/Valkey image (pinned by digest) |
+| `IMMICH_POSTGRES` | `ghcr.io/immich-app/postgres:14-...` | PostgreSQL image (pinned by digest) |
 
-Uses `stop` strategy — containers are stopped before backup to ensure database consistency.
+### In `secrets.env` (auto-generated)
 
-```bash
-homestack backup immich
+| Variable | Description |
+|----------|-------------|
+| `DB_USERNAME` | PostgreSQL username (default: `immich`) |
+| `DB_PASSWORD` | PostgreSQL password (auto-generated, 32 chars) |
+| `DB_DATABASE_NAME` | PostgreSQL database name (default: `immich`) |
+
+## Customization
+
+### Adding External Photo Storage (NAS Mount)
+
+Edit `installed/immich/compose.yaml` and add a volume to the `immich-server` service:
+
+```yaml
+services:
+  immich-server:
+    volumes:
+      - ${APPDATA}/immich/library:/data
+      - /mnt/nas/photos:/mnt/photos  # Add your NAS mount
 ```
+
+Then configure the external library in Immich's web UI under **Administration → External Libraries**.
+
+### Hardware Acceleration
+
+For hardware-accelerated video transcoding, add device mappings:
+
+```yaml
+services:
+  immich-server:
+    devices:
+      - /dev/dri:/dev/dri  # Intel Quick Sync / AMD VAAPI
+```
+
+### Changing Machine Learning Model
+
+Add environment variable to the ML service:
+
+```yaml
+services:
+  immich-machine-learning:
+    environment:
+      - MACHINE_LEARNING_MODEL_NAME=ViT-B-16__openai
+```
+
+## Data & Backup
+
+- **Backup strategy:** `stop` (containers stop during backup for database consistency)
+- **Data location:** `AppData/immich/`
+- **Database:** PostgreSQL data in `AppData/immich/postgres/`
 
 ## Tips
 
-- Hardware transcoding can be enabled by modifying the compose file — see [Immich docs](https://docs.immich.app/features/hardware-transcoding).
-- The ML service downloads AI models on first startup, which may take a few minutes.
-- For external access, set up a reverse proxy (e.g., Nginx, Caddy, Traefik) with HTTPS.
+- Use the Immich mobile app for automatic photo backup from your phone
+- GPU acceleration significantly speeds up face detection and smart search
+- The ML model cache (`AppData/immich/ml/`) can be 1–3 GB
+- Initial indexing of a large library can take hours

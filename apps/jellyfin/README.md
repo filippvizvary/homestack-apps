@@ -1,60 +1,124 @@
 # Jellyfin
 
-Free software media system for streaming movies, TV shows, music, and more.
+Free software media system for streaming movies, TV shows, and music.
 
-**Website:** <https://jellyfin.org>
+- **Official Documentation:** <https://jellyfin.org/docs>
+- **GitHub:** <https://github.com/jellyfin/jellyfin>
+- **Port:** `8096` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:8096` in your browser.
+1. Open `http://<your-server-ip>:8096` in your browser
+2. Follow the setup wizard to create an admin account
+3. Add media libraries pointing to `/Media/Movies`, `/Media/TV`, `/Media/Music`
+4. Download Jellyfin client apps for your devices
 
-## First-Time Setup
+## Services
 
-1. On first visit, the **Setup Wizard** will guide you through initial configuration.
-2. Choose your preferred language.
-3. Create an admin username and password.
-4. Add media libraries by pointing them to the appropriate paths:
-   - **Movies:** `/Media/Movies`
-   - **TV Shows:** `/Media/TV`
-   - **Music:** `/Media/Music`
-5. Configure metadata language and remote access settings.
-6. Complete the wizard and log in.
-
-## Media Directories
-
-Place your media files in the following directories on the host:
-
-| Type | Host Path | Container Path |
-|------|-----------|----------------|
-| Movies | `Media/Movies/` | `/Media/Movies` |
-| TV Shows | `Media/TV/` | `/Media/TV` |
-| Music | `Media/Music/` | `/Media/Music` |
-
-## Configuration
-
-Edit `installed/jellyfin/config.env` to change the image version:
-- `JELLYFIN_SERVER` — Jellyfin Docker image tag
-
-## Data Storage
-
-- **Config & metadata:** `AppData/jellyfin/config/`
-- **Cache (transcoding):** `AppData/jellyfin/cache/`
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `jellyfin` | `jellyfin` | Media server |
 
 ## Ports
 
-| Port | Protocol | Purpose |
-|------|----------|---------|
-| 8096 | TCP | Web UI and API |
-| 7359 | UDP | Auto-discovery on local network |
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `8096` | TCP | Web UI and API |
+| `7359` | UDP | Client auto-discovery (LAN) |
 
-## Client Apps
+## Volumes
 
-- **Web:** Built-in at port 8096
-- **Mobile:** [Jellyfin for Android](https://play.google.com/store/apps/details?id=org.jellyfin.mobile) / [Jellyfin for iOS](https://apps.apple.com/app/jellyfin-mobile/id1480732557)
-- **Desktop:** [Jellyfin Media Player](https://github.com/jellyfin/jellyfin-media-player/releases)
-- **TV:** Apps available for Roku, Fire TV, Android TV, and more
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/jellyfin/config` | `/config` | Configuration, databases, metadata |
+| `${APPDATA}/jellyfin/cache` | `/cache` | Transcoding cache and image cache |
+| `${MEDIA}` | `/Media` | Full media library (read-only recommended) |
+
+## Environment Variables
+
+### In `config.env`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JELLYFIN_SERVER` | `jellyfin/jellyfin:10.11.5` | Jellyfin image tag |
+
+### Global (from `homestack.env`)
+
+| Variable | Description |
+|----------|-------------|
+| `DOCKER_USER` | `PUID:PGID` — sets file ownership for config/cache |
+| `TZ` | Timezone for display |
+
+## Customization
+
+### Adding NAS Storage
+
+Edit `installed/jellyfin/compose.yaml` to add additional media paths:
+
+```yaml
+services:
+  jellyfin:
+    volumes:
+      - ${APPDATA}/jellyfin/config:/config
+      - ${APPDATA}/jellyfin/cache:/cache
+      - ${MEDIA}:/Media
+      - /mnt/nas/movies:/mnt/movies:ro    # NAS movie share
+      - /mnt/nas/tv:/mnt/tv:ro            # NAS TV share
+      - /mnt/nas/music:/mnt/music:ro      # NAS music share
+```
+
+Then add these paths as libraries in Jellyfin's web UI under **Dashboard → Libraries**.
+
+### Hardware Transcoding
+
+For Intel Quick Sync (most common):
+
+```yaml
+services:
+  jellyfin:
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    group_add:
+      - "105"  # render group GID (check with: getent group render)
+```
+
+For NVIDIA GPU:
+
+```yaml
+services:
+  jellyfin:
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+```
+
+Enable hardware transcoding in **Dashboard → Playback → Transcoding**.
+
+### Custom Ports
+
+Edit `installed/jellyfin/compose.yaml`:
+
+```yaml
+ports:
+  - 9096:8096/tcp   # Changed from 8096
+  - 7359:7359/udp
+```
+
+## Data & Backup
+
+- **Backup strategy:** `live` (backup while running)
+- **Config:** `AppData/jellyfin/config/` (metadata, databases, user preferences)
+- **Cache:** `AppData/jellyfin/cache/` (transcoding cache, can be rebuilt)
+- **Media:** Stored in `Media/` — not backed up by HomeStack (manage separately)
 
 ## Tips
 
-- Hardware transcoding (VAAPI/QSV/NVENC) can be configured by modifying the compose file — see [Jellyfin docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/).
-- Enable DLNA in settings if you want to cast to smart TVs on your network.
+- Use hardware transcoding to reduce CPU load during streaming
+- The `:ro` (read-only) flag on media mounts prevents accidental deletion
+- Jellyfin Mobile and Jellyfin Media Player are the best client apps
+- Consider scheduling library scans during off-peak hours for large libraries

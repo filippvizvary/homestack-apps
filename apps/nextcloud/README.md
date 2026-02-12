@@ -1,60 +1,120 @@
 # Nextcloud
 
-Self-hosted productivity and file sync platform — a Google Drive/Dropbox alternative.
+Self-hosted productivity platform — file sync, calendar, contacts, office suite, and more.
 
-**Website:** <https://nextcloud.com>
+- **Official Documentation:** <https://docs.nextcloud.com>
+- **Website:** <https://nextcloud.com>
+- **Port:** `4432` (HTTPS)
 
-## Access
+## After Installation
 
-Open `https://<your-server-ip>:4432` in your browser.
-
-> **Note:** Nextcloud uses HTTPS (port 4432). Your browser will show a certificate warning for the self-signed certificate — this is normal. Accept the warning to proceed.
-
-## First-Time Setup
-
-1. On first visit, create an **admin account** with your desired username and password.
-2. Wait for the initial setup to complete (may take a minute as apps are installed).
-3. Once logged in, explore the dashboard and configure your instance under **Administration Settings** (top-right menu > Administration settings).
+1. Open `https://<your-server-ip>:4432` in your browser (accept the self-signed certificate warning)
+2. Create your admin account
+3. Install recommended apps (Calendar, Contacts, Notes, etc.)
+4. Download Nextcloud desktop/mobile sync clients from <https://nextcloud.com/install/#install-clients>
 
 ## Services
 
-| Service | Description |
-|---------|-------------|
-| `nextcloud` | Main application (LinuxServer image) |
-| `nextcloud-db` | MariaDB database |
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `nextcloud-db` | `nextcloud_mariadb` | MariaDB database |
+| `nextcloud` | `nextcloud` | Nextcloud app (LinuxServer.io image, Apache + PHP) |
 
-## Configuration
+## Ports
 
-Edit `installed/nextcloud/config.env` to change image versions:
-- `NEXTCLOUD_SERVER` — Nextcloud Docker image tag
-- `MARIADB_SERVER` — MariaDB Docker image tag
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `4432` | TCP (HTTPS) | Web UI — maps host 4432 to container 443 |
 
-Key secrets (auto-generated in `secrets.env`):
-- `MARIADB_ROOT_PASSWORD` — MariaDB root password
-- `MARIADB_DATABASE` — Database name (default: `nextcloud`)
-- `MARIADB_USER` — Database user (default: `nextcloud`)
-- `MARIADB_PASSWORD` — Database user password
+## Volumes
 
-## Data Storage
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/nextcloud/db` | `/var/lib/mysql` | MariaDB database files |
+| `${APPDATA}/nextcloud/config` | `/config` | Nextcloud configuration (Apache, PHP, app config) |
+| `${APPDATA}/nextcloud/data` | `/data` | User files and data |
 
-- **Nextcloud data & config:** `AppData/nextcloud/`
+## Environment Variables
 
-## Backup
+### In `config.env`
 
-Uses `stop` strategy — containers are stopped before backup to ensure database consistency.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXTCLOUD_SERVER` | `lscr.io/linuxserver/nextcloud:32.0.6` | Nextcloud image tag |
+| `MARIADB_SERVER` | `mariadb:11.7` | MariaDB image tag |
 
-```bash
-homestack backup nextcloud
+### In `secrets.env` (auto-generated)
+
+| Variable | Description |
+|----------|-------------|
+| `MARIADB_ROOT_PASSWORD` | MariaDB root password (auto-generated, 32 chars) |
+| `MARIADB_DATABASE` | Database name (default: `nextcloud`) |
+| `MARIADB_USER` | Database username (default: `nextcloud`) |
+| `MARIADB_PASSWORD` | Database user password (auto-generated, 24 chars) |
+
+### In `compose.yaml`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUID` | From `homestack.env` | User ID for file ownership |
+| `PGID` | From `homestack.env` | Group ID for file ownership |
+| `TZ` | From `homestack.env` | Timezone |
+| `MYSQL_HOST` | `nextcloud-db` | Database hostname (internal Docker network) |
+
+## Customization
+
+### Adding External Storage (NAS)
+
+Edit `installed/nextcloud/compose.yaml`:
+
+```yaml
+services:
+  nextcloud:
+    volumes:
+      - ${APPDATA}/nextcloud/config:/config
+      - ${APPDATA}/nextcloud/data:/data
+      - /mnt/nas/nextcloud-files:/mnt/nas:rw  # NAS storage
 ```
 
-## Client Apps
+Then enable the **External Storage** app in Nextcloud and configure the mount.
 
-- **Desktop sync:** [Nextcloud Desktop Client](https://nextcloud.com/install/#install-clients) (Windows, macOS, Linux)
-- **Mobile:** [Nextcloud for Android](https://play.google.com/store/apps/details?id=com.nextcloud.client) / [Nextcloud for iOS](https://apps.apple.com/app/nextcloud/id1125420102)
+### Custom Domain / Trusted Domains
+
+After installation, add your domain to trusted domains:
+
+```bash
+homestack exec nextcloud -- php /config/www/nextcloud/occ config:system:set trusted_domains 1 --value="cloud.yourdomain.com"
+```
+
+### Increasing Upload Limits
+
+The LinuxServer image includes Apache/PHP config at `AppData/nextcloud/config/php/php-local.ini`:
+
+```ini
+upload_max_filesize = 16G
+post_max_size = 16G
+memory_limit = 1G
+```
+
+### Using a Reverse Proxy
+
+When behind a reverse proxy (Nginx, Caddy, Traefik), set:
+
+```bash
+homestack exec nextcloud -- php /config/www/nextcloud/occ config:system:set overwriteprotocol --value="https"
+homestack exec nextcloud -- php /config/www/nextcloud/occ config:system:set overwrite.cli.url --value="https://cloud.yourdomain.com"
+```
+
+## Data & Backup
+
+- **Backup strategy:** `stop` (containers stop for MariaDB consistency)
+- **Database:** `AppData/nextcloud/db/`
+- **User files:** `AppData/nextcloud/data/`
+- **Config:** `AppData/nextcloud/config/`
 
 ## Tips
 
-- Install additional apps from the Nextcloud App Store (built into the web UI under Apps).
-- For external access, set up a reverse proxy with a valid SSL certificate.
-- Set your trusted domains in the Nextcloud config if accessing from multiple URLs.
-- The LinuxServer image uses `PUID`/`PGID` for file permissions, configured via HomeStack's global settings.
+- The HTTPS certificate is self-signed — use a reverse proxy for trusted HTTPS
+- First startup takes 1–2 minutes while the database initializes
+- Background jobs should use **Cron** — configure in **Administration Settings → Basic Settings**
+- Install the **Nextcloud Office** app for collaborative document editing

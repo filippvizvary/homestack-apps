@@ -1,38 +1,76 @@
 # Prowlarr
 
-Indexer manager and proxy for the Servarr stack — manages indexers for Radarr, Sonarr, and other apps.
+Indexer manager and proxy for the Servarr stack — manages indexers for Radarr, Sonarr, Lidarr, etc.
 
-**Website:** <https://prowlarr.com>
+- **Official Documentation:** <https://wiki.servarr.com/prowlarr>
+- **Website:** <https://prowlarr.com>
+- **Port:** `9696` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:9696` in your browser.
+1. Open `http://<your-server-ip>:9696` in your browser
+2. Set up authentication under **Settings → General → Authentication**
+3. Add indexers under **Indexers → Add Indexer**
+4. Connect to Radarr/Sonarr under **Settings → Apps**
 
-## First-Time Setup
+## Services
 
-1. On first visit, Prowlarr will ask you to set up **authentication**. Create a username and password.
-2. Go to **Settings > Indexers** to add your preferred indexer sites (Torznab, Newznab, etc.).
-3. Go to **Settings > Apps** to connect your Servarr apps:
-   - Add **Radarr** with URL `http://radarr:7878` (if on the same `media-net` network)
-   - Add **Sonarr** if installed
-   - You'll need each app's API key (found in their Settings > General page)
-4. Once connected, Prowlarr will automatically sync your indexers to all linked apps.
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `prowlarr` | `prowlarr` | Indexer manager (LinuxServer.io image) |
 
-## Network
+## Ports
 
-Prowlarr joins the `media-net` Docker network, allowing direct communication with Radarr, Sonarr, qBittorrent, and other Servarr stack apps by container name.
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `9696` | TCP | Web UI and API |
 
-## Configuration
+## Volumes
 
-Edit `installed/prowlarr/config.env` to change the image version:
-- `PROWLARR_SERVER` — Prowlarr Docker image tag (LinuxServer image)
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/prowlarr` | `/config` | Configuration, database, logs |
 
-## Data Storage
+## Environment Variables
 
-- **Config data:** `AppData/prowlarr/config/`
+### In `config.env`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PROWLARR_SERVER` | `lscr.io/linuxserver/prowlarr:2.3.0` | Image tag |
+
+### In `compose.yaml`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUID` | From `homestack.env` | User ID for file ownership |
+| `PGID` | From `homestack.env` | Group ID for file ownership |
+| `TZ` | From `homestack.env` | Timezone |
+
+## Networks
+
+- **`media-net`** — External Docker network shared with Radarr, qBittorrent, and Jellyseerr
+
+## Customization
+
+### Adding Custom Volumes
+
+```yaml
+services:
+  prowlarr:
+    volumes:
+      - ${APPDATA}/prowlarr:/config
+      - /path/to/custom:/custom  # Additional mount
+```
+
+## Data & Backup
+
+- **Backup strategy:** `live` (backup while running — uses SQLite)
+- **Data location:** `AppData/prowlarr/`
+- **Database:** SQLite in config directory
 
 ## Tips
 
-- Prowlarr is the central place to manage all your indexers — add them once here and they sync everywhere.
-- Use the built-in search to test indexers before connecting them to other apps.
-- Enable **FlareSolverr** integration if you need to bypass Cloudflare-protected indexers.
+- Connect Prowlarr to Radarr/Sonarr — it automatically syncs indexers to all connected apps
+- Set up Flaresolverr if your indexers require Cloudflare bypass
+- Prowlarr manages all indexers centrally — no need to configure them individually in each *arr app

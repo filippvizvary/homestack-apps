@@ -1,43 +1,72 @@
 # Uptime Kuma
 
-Self-hosted uptime monitoring tool — track the availability of your websites and services.
+Self-hosted uptime monitoring tool — monitor websites, APIs, and services.
 
-**Website:** <https://uptime.kuma.pet>
+- **Official Documentation:** <https://github.com/louislam/uptime-kuma/wiki>
+- **GitHub:** <https://github.com/louislam/uptime-kuma>
+- **Port:** `3001` (Web UI)
 
-## Access
+## After Installation
 
-Open `http://<your-server-ip>:3001` in your browser.
+1. Open `http://<your-server-ip>:3001` in your browser
+2. Create your admin account
+3. Add monitors for your services (HTTP, TCP, ping, DNS, etc.)
+4. Configure notifications (email, Slack, Discord, Telegram, etc.)
 
-## First-Time Setup
+## Services
 
-1. On first visit, create an **admin account** with your username and password.
-2. Click **Add New Monitor** to start monitoring a service:
-   - **HTTP(s):** Monitor any website or API endpoint
-   - **TCP Port:** Check if a specific port is open
-   - **Ping:** Simple ICMP ping check
-   - **Docker Container:** Monitor container status (requires Docker socket access)
-3. Configure notification channels under **Settings > Notifications** (supports email, Discord, Slack, Telegram, and many more).
+| Service | Container | Description |
+|---------|-----------|-------------|
+| `uptime-kuma` | `uptimekuma` | Monitoring server |
 
-## Configuration
+## Ports
 
-Edit `installed/uptimekuma/config.env` to change the image version:
-- `UPTIMEKUMA_SERVER` — Uptime Kuma Docker image tag
+| Port | Protocol | Description |
+|------|----------|-------------|
+| `3001` | TCP | Web UI and API |
 
-## Data Storage
+## Volumes
 
-- **Database & config:** `AppData/uptimekuma/data/`
+| Host Path | Container Path | Description |
+|-----------|----------------|-------------|
+| `${APPDATA}/uptimekuma` | `/app/data` | Configuration and SQLite database |
 
-## Backup
+## Environment Variables
 
-Uses `stop` strategy — containers are stopped before backup to protect the SQLite database.
+### In `config.env`
 
-```bash
-homestack backup uptimekuma
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `UPTIMEKUMA_SERVER` | `louislam/uptime-kuma:2.0.2` | Image tag |
+
+## Customization
+
+### Adding Custom Volumes
+
+```yaml
+services:
+  uptime-kuma:
+    volumes:
+      - ${APPDATA}/uptimekuma:/app/data
+      - /path/to/ssl-certs:/certs:ro  # Custom SSL certificates for monitoring
 ```
+
+### Changing the Port
+
+```yaml
+ports:
+  - 8443:3001  # Access on port 8443 instead
+```
+
+## Data & Backup
+
+- **Backup strategy:** `stop` (containers stop for SQLite consistency)
+- **Data location:** `AppData/uptimekuma/`
+- **Database:** SQLite in `AppData/uptimekuma/`
 
 ## Tips
 
-- Set up **status pages** to share service availability with users — accessible via a public URL.
-- Use the **maintenance** feature to schedule downtime windows and suppress alerts.
-- Monitor your other HomeStack apps by adding HTTP monitors pointing to their health check endpoints (e.g., `http://<server-ip>:8096/health` for Jellyfin).
-- Supports two-factor authentication (2FA) for extra security.
+- Add monitors for all your HomeStack apps to track uptime
+- Use **Status Pages** to create a public status dashboard
+- Configure notification channels before adding monitors
+- Uptime Kuma supports 20+ notification providers (Discord, Slack, Telegram, email, etc.)
