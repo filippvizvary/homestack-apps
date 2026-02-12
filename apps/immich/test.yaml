@@ -1,0 +1,13 @@
+startup_time: 60
+health_checks:
+  - url: "http://localhost:2283/api/server/ping"
+    method: GET
+    expected_status: 200
+    timeout: 15
+exec_checks:
+  - container: redis
+    command: "redis-cli ping"
+    expected_output: "PONG"
+  - container: database
+    command: "pg_isready -U immich"
+    expected_output: "accepting connections"

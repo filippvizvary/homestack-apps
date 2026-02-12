@@ -1,0 +1,6 @@
+startup_time: 20
+health_checks:
+  - url: "http://localhost:8000/alive"
+    method: GET
+    expected_status: 200
+    timeout: 10

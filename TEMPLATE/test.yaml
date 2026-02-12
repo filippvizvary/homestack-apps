@@ -1,0 +1,50 @@
+# test.yaml — App Health Test Definition
+#
+# This file defines automated health checks that HomeStack runs after
+# installing the app to verify it's working correctly.
+#
+# Every app in the catalog MUST include a test.yaml file.
+#
+# ────────────────────────────────────────────────────────────────────
+
+# How long (seconds) to wait for containers to become healthy before
+# running checks. Database-backed apps need more time (45-60s).
+# Simple single-container apps can use 15-30s.
+startup_time: 30
+
+# HTTP health checks — validated with curl after startup_time elapses.
+# Each check hits a URL and verifies the response status code.
+health_checks:
+  - url: "http://localhost:PORT/health"     # (required) Full URL to check
+    method: GET                              # (optional) HTTP method, default: GET
+    expected_status: 200                     # (optional) Expected HTTP status, default: 200
+    body_contains: "ok"                      # (optional) String to find in response body
+    timeout: 10                              # (optional) Curl timeout in seconds, default: 10
+
+  # Example: HTTPS endpoint (curl uses --insecure for self-signed certs)
+  # - url: "https://localhost:8443/"
+  #   expected_status: 200
+  #   timeout: 15
+
+# Exec checks — run commands inside containers to verify internal state.
+# Useful for verifying databases, caches, and internal services.
+# (optional — omit this block if the app has no sidecar services)
+exec_checks:
+  - container: my-container                  # (required) Service name from compose.yaml
+    command: "echo hello"                    # (required) Shell command to execute
+    expected_output: "hello"                 # (optional) String to find in command output
+
+  # Example: Redis connectivity check
+  # - container: redis
+  #   command: "redis-cli ping"
+  #   expected_output: "PONG"
+
+  # Example: PostgreSQL readiness
+  # - container: database
+  #   command: "pg_isready -U myuser"
+  #   expected_output: "accepting connections"
+
+  # Example: MariaDB health
+  # - container: my-db
+  #   command: "healthcheck.sh --connect --innodb_initialized"
+  #   expected_output: ""

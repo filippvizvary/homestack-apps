@@ -1,0 +1,6 @@
+startup_time: 30
+health_checks:
+  - url: "http://localhost:9696/ping"
+    method: GET
+    expected_status: 200
+    timeout: 10

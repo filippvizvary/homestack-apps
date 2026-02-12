@@ -16,7 +16,8 @@ Thank you for contributing! This guide walks you through adding a new app or upd
 apps/your-app/
 ├── app.yaml       # App metadata and secrets
 ├── compose.yaml   # Docker Compose definition
-└── config.env     # Public defaults (image tags, ports)
+├── config.env     # Public defaults (image tags, ports)
+└── test.yaml      # Health check definitions for automated testing
 ```
 
 ## Step-by-Step Guide
@@ -110,7 +111,43 @@ YOUR_APP_PORT=8080
 - No secrets or passwords (use `secrets` in app.yaml instead)
 - One variable per line, `KEY=value` format
 
-### 5. Test Locally
+### 5. Write `test.yaml`
+
+Every app **must** include a `test.yaml` that defines automated health checks. HomeStack uses these to verify the app works after install.
+
+```yaml
+startup_time: 30                         # seconds to wait before checking
+
+health_checks:
+  - url: "http://localhost:8080/health"  # HTTP endpoint to check
+    method: GET                          # optional, default: GET
+    expected_status: 200                 # optional, default: 200
+    body_contains: "ok"                  # optional, string in response body
+    timeout: 10                          # optional, curl timeout in seconds
+
+exec_checks:                             # optional, for database sidecars
+  - container: redis
+    command: "redis-cli ping"
+    expected_output: "PONG"
+```
+
+**Fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `startup_time` | Yes | Seconds to wait for containers to become healthy |
+| `health_checks` | Yes | List of HTTP endpoints to validate |
+| `exec_checks` | No | Commands to run inside containers |
+
+**Tips:**
+- Use the same URL as your Docker healthcheck
+- Database-backed apps need longer `startup_time` (45-60s)
+- Add `exec_checks` for Redis, PostgreSQL, MariaDB sidecars
+- HTTPS endpoints use `--insecure` (self-signed certs are fine)
+
+See `TEMPLATE/test.yaml` for a fully annotated example.
+
+### 6. Test Locally
 
 ```bash
 # Sync the catalog
@@ -128,7 +165,7 @@ homestack status your-app
 homestack remove your-app
 ```
 
-### 6. Submit a Pull Request
+### 7. Submit a Pull Request
 
 Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) and check off all items.
 

@@ -41,7 +41,8 @@ homestack-apps/
 ├── TEMPLATE/              # Annotated blueprint for new apps
 │   ├── app.yaml           # 74 lines, every field documented
 │   ├── compose.yaml       # 59 lines, with best-practice comments
-│   └── config.env         # 11 lines, variable naming examples
+│   ├── config.env         # 11 lines, variable naming examples
+│   └── test.yaml          # Health check definitions, fully annotated
 ├── .github/
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── CONTRIBUTING.md
@@ -49,9 +50,9 @@ homestack-apps/
 └── LICENSE
 ```
 
-## The Three-File App Format
+## The Four-File App Format
 
-Every app consists of exactly three files in `apps/<appname>/`:
+Every app consists of exactly four files in `apps/<appname>/`:
 
 ### 1. app.yaml — App Manifest
 
@@ -126,6 +127,53 @@ Simple `KEY=VALUE` file with image tags and app-specific defaults.
 - Version tag MUST match the `version:` field in `app.yaml`
 - Never put secrets here — those go in the `secrets:` block of `app.yaml`
 - Users may edit this file after installation; HomeStack tracks which keys they've changed
+
+### 4. test.yaml — Health Check Definition
+
+Defines automated health checks that HomeStack runs after installing the app.
+
+**Fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `startup_time` | integer | Yes | Seconds to wait for containers to become healthy before checks |
+| `health_checks` | list | Yes | HTTP endpoints to validate |
+| `exec_checks` | list | No | Commands to run inside containers (for database sidecars) |
+
+**health_checks entry:**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `url` | string | Yes | — | Full URL to check (e.g., `http://localhost:8096/health`) |
+| `method` | string | No | `GET` | HTTP method |
+| `expected_status` | integer | No | `200` | Expected HTTP status code |
+| `body_contains` | string | No | — | String to find in response body |
+| `timeout` | integer | No | `10` | Curl timeout in seconds |
+
+**exec_checks entry:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `container` | string | Yes | Service name from compose.yaml |
+| `command` | string | Yes | Shell command to execute |
+| `expected_output` | string | No | String to find in command output |
+
+**Example:**
+
+```yaml
+startup_time: 60
+health_checks:
+  - url: "http://localhost:2283/api/server/ping"
+    expected_status: 200
+    timeout: 15
+exec_checks:
+  - container: redis
+    command: "redis-cli ping"
+    expected_output: "PONG"
+  - container: database
+    command: "pg_isready -U immich"
+    expected_output: "accepting connections"
+```
 
 ## All 10 Apps — Quick Reference
 
@@ -255,8 +303,9 @@ Documented in `CONTRIBUTING.md`:
 2. Fill in `app.yaml` — all required fields (name, display_name, description, version, category, port, appdata_dirs)
 3. Write `compose.yaml` — use image variables, add healthcheck, map volumes under `${APPDATA}/<appname>/`
 4. Write `config.env` — pin image tags with `APPNAME_SERVER=registry/image:tag`
-5. If the app has a database, add secrets to `app.yaml` and set `backup_strategy: stop`
-6. Test with `homestack install <appname>` locally
+5. Write `test.yaml` — define startup_time, health_checks (URL matching the Docker healthcheck), and exec_checks for any database sidecars
+6. If the app has a database, add secrets to `app.yaml` and set `backup_strategy: stop`
+7. Test with `homestack install <appname>` locally, then run `APP=<appname> ./tests/run_tests.sh apps`
 
 ### Updating an app version
 1. Update `version:` in `app.yaml`
