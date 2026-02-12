@@ -9,6 +9,6 @@ priority: 50
 
 networks: []
 appdata_dirs: [jellyfin]
-media_dirs: []
+media_dirs: [Movies, TV, Music]
 
 secrets:

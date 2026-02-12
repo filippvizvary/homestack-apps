@@ -44,12 +44,12 @@ networks: []
 #   Example:  networks: [proxy]
 
 # ── Storage ────────────────────────────────────────────────────
-# (required) Directories under $APPDATA_DIR to create and back up.
+# (required) Directories under $APPDATA to create and back up.
 # These hold persistent config/database/state for the app.
 appdata_dirs: [myapp]
 #   Example: appdata_dirs: [nextcloud, nextcloud-db]
 
-# (optional) Directories under $MEDIA_DIR to mount (read/write).
+# (optional) Directories under $MEDIA to mount (read/write).
 # Used by media apps that need access to shared libraries.
 media_dirs: []
 #   Example: media_dirs: [movies, tv, music]

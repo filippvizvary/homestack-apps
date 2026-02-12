@@ -10,5 +10,6 @@ priority: 80
 networks: []
 appdata_dirs: [uptimekuma]
 media_dirs: []
+backup_strategy: stop
 
 secrets:

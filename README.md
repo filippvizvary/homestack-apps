@@ -10,13 +10,13 @@ Each directory under `apps/` is a self-contained app definition that HomeStack c
 |-----|----------|---------|-------------|
 | [Immich](apps/immich) | media | 2.4.1 | Self-hosted photo and video management |
 | [Jellyfin](apps/jellyfin) | media | 10.11.5 | Free software media system for streaming |
-| [Jellyseerr](apps/jellyseerr) | media | 2.7.3 | Media request management for Jellyfin |
+| [Jellyseerr](apps/jellyseerr) | servarr | 2.7.3 | Media request management for Jellyfin |
 | [n8n](apps/n8n) | automation | 2.1.4 | Workflow automation tool |
 | [Nextcloud](apps/nextcloud) | cloud | 32.0.6 | Self-hosted productivity and file sync |
-| [Prowlarr](apps/prowlarr) | download | 2.3.0 | Indexer manager for *arr apps |
-| [qBittorrent](apps/qbittorrent) | download | 5.1.4 | BitTorrent client with web UI |
-| [Radarr](apps/radarr) | download | 6.0.4 | Movie collection manager |
-| [Uptime Kuma](apps/uptimekuma) | monitoring | 1.23.16 | Self-hosted monitoring tool |
+| [Prowlarr](apps/prowlarr) | servarr | 2.3.0 | Indexer manager for *arr apps |
+| [qBittorrent](apps/qbittorrent) | servarr | 5.1.4 | BitTorrent client with web UI |
+| [Radarr](apps/radarr) | servarr | 6.0.4 | Movie collection manager |
+| [Uptime Kuma](apps/uptimekuma) | monitoring | 2.0.2 | Self-hosted uptime monitoring tool |
 | [Vaultwarden](apps/vaultwarden) | security | 1.35.3 | Bitwarden-compatible password manager |
 
 ## App Structure
@@ -36,7 +36,7 @@ Declares everything HomeStack needs to know about the app — name, version, por
 
 ### compose.yaml
 
-Standard Docker Compose file. Variables like `${APPDATA_DIR}`, `${MEDIA_DIR}`, `${PUID}`, `${PGID}`, and `${TZ}` are substituted from the user's global config. App-specific variables come from `config.env` and `secrets.env`.
+Standard Docker Compose file. Variables like `${APPDATA}`, `${MEDIA}`, `${PUID}`, `${PGID}`, and `${TZ}` are substituted from the user's global config. App-specific variables come from `config.env` and `secrets.env`.
 
 ### config.env
 

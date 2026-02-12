@@ -10,6 +10,7 @@ priority: 80
 networks: []
 appdata_dirs: [vaultwarden]
 media_dirs: []
+backup_strategy: stop
 
 secrets:
   - key: VAULTWARDEN_DOMAIN

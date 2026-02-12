@@ -3,7 +3,7 @@
 #  All ${VARIABLES} are substituted at runtime from:
 #    1. config.env   — image tags, ports, paths  (committed)
 #    2. secrets.env  — passwords, API keys        (generated at install)
-#    3. homestack.env — global paths (APPDATA_DIR, MEDIA_DIR, etc.)
+#    3. homestack.env — global paths (APPDATA, MEDIA, etc.)
 # ──────────────────────────────────────────────────────────────
 
 services:
@@ -15,8 +15,8 @@ services:
     ports:
       - "${MYAPP_PORT}:8080"          # host:container
     volumes:
-      - ${APPDATA_DIR}/myapp:/data    # persistent config/state
-      # - ${MEDIA_DIR}/movies:/movies # uncomment if media access needed
+      - ${APPDATA}/myapp:/data    # persistent config/state
+      # - ${MEDIA}/movies:/movies # uncomment if media access needed
     environment:
       - TZ=${TZ}
       - PUID=${PUID}
@@ -47,7 +47,7 @@ services:
   #   container_name: myapp-db
   #   restart: unless-stopped
   #   volumes:
-  #     - ${APPDATA_DIR}/myapp-db:/var/lib/postgresql/data
+  #     - ${APPDATA}/myapp-db:/var/lib/postgresql/data
   #   environment:
   #     - POSTGRES_USER=${DB_USERNAME}
   #     - POSTGRES_PASSWORD=${DB_PASSWORD}

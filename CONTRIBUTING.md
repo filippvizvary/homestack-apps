@@ -61,7 +61,7 @@ secrets:                            # generated into secrets.env
 | `automation` | Workflow, scheduling, bots |
 | `monitoring` | Uptime, metrics, dashboards |
 | `security` | Passwords, VPN, auth |
-| `download` | Torrents, indexers, *arr stack |
+| `servarr` | Torrents, indexers, *arr stack |
 | `other` | Anything else |
 
 #### Secret Fields
@@ -82,8 +82,8 @@ Standard Docker Compose format with variable substitution.
 
 | Variable | Source | Example |
 |----------|--------|---------|
-| `${APPDATA_DIR}` | homestack.env | `/home/user/homestack/AppData` |
-| `${MEDIA_DIR}` | homestack.env | `/home/user/homestack/Media` |
+| `${APPDATA}` | homestack.env | `/home/user/homestack/AppData` |
+| `${MEDIA}` | homestack.env | `/home/user/homestack/Media` |
 | `${PUID}` | homestack.env | `1000` |
 | `${PGID}` | homestack.env | `1000` |
 | `${TZ}` | homestack.env | `America/New_York` |
@@ -94,7 +94,7 @@ Standard Docker Compose format with variable substitution.
 **Best practices:**
 - Always include a `healthcheck` — HomeStack uses it for `homestack status`
 - Use `restart: unless-stopped`
-- Mount persistent data under `${APPDATA_DIR}/your-app/`
+- Mount persistent data under `${APPDATA}/your-app/`
 - Reference secrets via `env_file: secrets.env` or individual `${VAR}` entries
 - Set `container_name` to the app name for easy debugging
 
