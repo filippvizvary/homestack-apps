@@ -2,5 +2,5 @@ startup_time: 30
 health_checks:
   - url: "http://localhost:3001"
     method: GET
-    expected_status: 200
+    expected_status: 302
     timeout: 10
