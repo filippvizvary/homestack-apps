@@ -5,10 +5,21 @@ Thank you for contributing! This guide walks you through adding a new app or upd
 ## Quick Start
 
 1. **Fork** this repository
-2. **Copy** the template: `cp -r TEMPLATE/ apps/your-app/`
-3. **Fill in** the three files (see below)
-4. **Test** locally with `homestack install your-app`
-5. **Submit** a pull request
+2. **Create a branch** from `main` using the naming convention below
+3. **Copy** the template: `cp -r TEMPLATE/ apps/your-app/`
+4. **Fill in** the four files (see below)
+5. **Test** locally with `homestack install your-app`
+6. **Submit** a pull request targeting `main`
+
+## Branch Naming
+
+| Prefix | When to use | Example |
+|--------|-------------|--------|
+| `app/` | Adding a new app | `app/sonarr`, `app/grafana` |
+| `update/` | Bumping an existing app version | `update/immich-2.5.0` |
+| `fix/` | Fixing an existing app definition | `fix/nextcloud-healthcheck` |
+
+All branches are based on `main` and merge back into `main` via pull request.
 
 ## Directory Layout
 

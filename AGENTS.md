@@ -274,10 +274,25 @@ The `TEMPLATE/` directory is a heavily annotated blueprint for contributors addi
 Documented in `CONTRIBUTING.md`:
 
 1. Fork the repo
-2. Copy `TEMPLATE/` to `apps/<appname>/`
-3. Fill in all three files following the field reference
-4. Test locally with HomeStack (`homestack install <app>`, check status, backup, remove)
-5. Submit PR using the template in `.github/PULL_REQUEST_TEMPLATE.md`
+2. Create a branch from `main` using the naming convention:
+   - `app/<appname>` — new app definitions
+   - `update/<appname>-<version>` — version bumps
+   - `fix/<description>` — fixes to existing app definitions
+3. Copy `TEMPLATE/` to `apps/<appname>/`
+4. Fill in all four files following the field reference
+5. Test locally with HomeStack (`homestack install <app>`, check status, backup, remove)
+6. Submit PR targeting `main` using the template in `.github/PULL_REQUEST_TEMPLATE.md`
+
+### Branching Strategy
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Stable catalog. All apps tested and working. |
+| `app/*` | New app definitions (e.g., `app/sonarr`, `app/grafana`) |
+| `update/*` | Version bumps (e.g., `update/immich-2.5.0`) |
+| `fix/*` | Fixes to existing definitions (e.g., `fix/nextcloud-healthcheck`) |
+
+Since each app is self-contained, branches merge directly into `main` via PR. No integration branch is needed.
 
 **PR Checklist (required):**
 - Directory name matches `name:` field

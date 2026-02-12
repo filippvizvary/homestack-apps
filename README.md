@@ -51,6 +51,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, or quick-start:
 3. Test locally with `homestack install your-app`
 4. Submit a pull request
 
+## Branching Strategy
+
+All contributions use short-lived branches off `main`:
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Stable catalog. All apps tested and working. |
+| `app/*` | New app definitions (e.g., `app/sonarr`, `app/grafana`) |
+| `update/*` | Version bumps for existing apps (e.g., `update/immich-2.5.0`) |
+| `fix/*` | Fixes to existing app definitions (e.g., `fix/nextcloud-healthcheck`) |
+
+Since each app is self-contained, branches merge directly into `main` via pull request. No integration branch is needed.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
