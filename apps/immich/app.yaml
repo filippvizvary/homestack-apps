@@ -7,6 +7,8 @@ port: 2283
 url: https://immich.app
 priority: 40
 
+backup_strategy: stop
+
 networks: []
 appdata_dirs: [immich]
 media_dirs: []

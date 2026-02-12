@@ -1,11 +1,13 @@
 name: nextcloud
 display_name: Nextcloud
 description: Self-hosted productivity and file sync platform
-version: latest
+version: 32.0.6
 category: cloud
 port: 4432
 url: https://nextcloud.com
 priority: 30
+
+backup_strategy: stop
 
 networks: []
 appdata_dirs: [nextcloud]

@@ -1,7 +1,7 @@
 name: prowlarr
 display_name: Prowlarr
 description: Indexer manager for the Servarr stack
-version: latest
+version: 2.3.0
 category: servarr
 port: 9696
 url: https://prowlarr.com

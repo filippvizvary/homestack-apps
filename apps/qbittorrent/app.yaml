@@ -1,7 +1,7 @@
 name: qbittorrent
 display_name: qBittorrent
 description: BitTorrent client with web UI
-version: latest
+version: 5.1.4
 category: servarr
 port: 8080
 url: https://www.qbittorrent.org

@@ -1,7 +1,7 @@
 name: radarr
 display_name: Radarr
 description: Movie collection manager for torrent users
-version: latest
+version: 6.0.4
 category: servarr
 port: 7878
 url: https://radarr.video

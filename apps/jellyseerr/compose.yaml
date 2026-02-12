@@ -6,7 +6,7 @@ services:
     init: true
     container_name: jellyseerr
     environment:
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=info
       - TZ=${TZ}
       - PORT=5055
     ports:

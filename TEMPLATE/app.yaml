@@ -1,0 +1,74 @@
+# ──────────────────────────────────────────────────────────────
+#  HomeStack App Manifest — app.yaml
+#  Copy this entire TEMPLATE/ directory into apps/<your-app>/
+#  and fill in the values below.
+# ──────────────────────────────────────────────────────────────
+
+# (required) Machine name — lowercase, no spaces, matches the directory name
+name: myapp
+
+# (required) Human-readable name shown in CLI output
+display_name: My App
+
+# (required) One-line description of the app
+description: A short description of what this app does
+
+# (required) Pin to a specific upstream release (never use "latest")
+version: 1.0.0
+
+# (required) Category for filtering — choose one:
+#   media | cloud | automation | monitoring | security | download | other
+category: other
+
+# (required) Primary web UI port exposed on the host
+port: 8080
+
+# (optional) Upstream project URL (shown in `homestack list`)
+url: https://example.com
+
+# (optional) Start/stop ordering — lower numbers start first (default: 50)
+#   Databases/infra: 10-20  |  Core apps: 30-40  |  Helpers: 50-70
+priority: 50
+
+# (optional) Backup strategy — how HomeStack should handle this app during backup
+#   "stop"  → stop containers before backing up data (safe for databases)
+#   "live"  → back up without stopping (ok for stateless/file-only apps)
+#   omit    → defaults to "live"
+backup_strategy: stop
+
+# ── Networking ─────────────────────────────────────────────────
+# (optional) Extra Docker networks this app needs to be on.
+# Shared networks (e.g., "proxy") let containers reach each other.
+# HomeStack auto-creates these networks if they don't exist.
+networks: []
+#   Example:  networks: [proxy]
+
+# ── Storage ────────────────────────────────────────────────────
+# (required) Directories under $APPDATA_DIR to create and back up.
+# These hold persistent config/database/state for the app.
+appdata_dirs: [myapp]
+#   Example: appdata_dirs: [nextcloud, nextcloud-db]
+
+# (optional) Directories under $MEDIA_DIR to mount (read/write).
+# Used by media apps that need access to shared libraries.
+media_dirs: []
+#   Example: media_dirs: [movies, tv, music]
+
+# ── Secrets ────────────────────────────────────────────────────
+# (optional) Secrets written to secrets.env during install.
+# Each entry creates a KEY=VALUE line in the app's secrets.env file.
+secrets:
+  # Example: auto-generated password
+  - key: DB_PASSWORD
+    prompt: "Database password"
+    generate: true       # auto-generate if true (user can still override)
+    length: 32           # password length (default: 32, alphanumeric only)
+
+  # Example: user-supplied value with a sensible default
+  - key: DB_USERNAME
+    prompt: "Database username"
+    default: myapp       # pre-filled; press Enter to accept
+
+  # Example: user-supplied value with no default (user must type something)
+  # - key: API_KEY
+  #   prompt: "External API key"

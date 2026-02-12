@@ -25,10 +25,16 @@ services:
     depends_on:
       nextcloud-db:
         condition: service_healthy
+    env_file:
+      - secrets.env
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - MYSQL_HOST=nextcloud-db
+      - MYSQL_DATABASE=${MARIADB_DATABASE}
+      - MYSQL_USER=${MARIADB_USER}
+      - MYSQL_PASSWORD=${MARIADB_PASSWORD}
     volumes:
       - ${APPDATA}/nextcloud/config:/config
       - ${APPDATA}/nextcloud/data:/data
