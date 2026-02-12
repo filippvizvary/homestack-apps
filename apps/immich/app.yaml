@@ -1,7 +1,7 @@
 name: immich
 display_name: Immich
 description: Self-hosted photo and video management
-version: 2.4.1
+version: v2.4.1
 category: media
 port: 2283
 url: https://immich.app
