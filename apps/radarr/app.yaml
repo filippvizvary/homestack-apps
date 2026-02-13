@@ -11,4 +11,6 @@ networks: [media-net]
 appdata_dirs: [radarr]
 media_dirs: [Movies, Downloads]
 
+depends_on: [prowlarr]
+
 secrets:

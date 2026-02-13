@@ -11,4 +11,6 @@ networks: [media-net]
 appdata_dirs: [jellyseerr]
 media_dirs: []
 
+depends_on: [jellyfin]
+
 secrets:

@@ -17,7 +17,7 @@ description: A short description of what this app does
 version: 1.0.0
 
 # (required) Category for filtering — choose one:
-#   media | cloud | automation | monitoring | security | download | other
+#   media | cloud | automation | monitoring | security | servarr | other
 category: other
 
 # (required) Primary web UI port exposed on the host
@@ -37,6 +37,11 @@ priority: 50
 backup_strategy: stop
 
 # ── Networking ─────────────────────────────────────────────────
+# (optional) Apps this app works best with. HomeStack will warn during
+# install if a dependency is not installed, but won't block installation.
+depends_on: []
+#   Example: depends_on: [jellyfin]
+
 # (optional) Extra Docker networks this app needs to be on.
 # Shared networks (e.g., "proxy") let containers reach each other.
 # HomeStack auto-creates these networks if they don't exist.
